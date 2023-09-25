@@ -54,15 +54,17 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * <p>
    * Return head
    * </p>
-   * @param unit        unit can be or kJ/kg
+   * 
+   * @param unit unit can be or kJ/kg
    */
-  public double getHead(String unit){
-    if(unit.equals("meter")){
-      return (getOutletStream().getPressure("bara")-getInletStream().getPressure("bara"))/(1000.0 * ThermodynamicConstantsInterface.gravity / 1.0E5)
-    }
-    else if(unit.equals("kJ/kg")){
-      return getPower("kW")/getInletStream().getFlowRate("kg/sec");
-    }
+  public double getHead(String unit) {
+    if (unit.equals("meter")) {
+      return (getOutletStream().getPressure("bara") - getInletStream().getPressure("bara"))
+          / (1000.0 * ThermodynamicConstantsInterface.gravity / 1.0E5);
+    } else if (unit.equals("kJ/kg")) {
+      return getPower("kW") / getInletStream().getFlowRate("kg/sec");
+    } else
+      return getPower("kW") / getInletStream().getFlowRate("kg/sec");
   }
 
   /**
@@ -70,9 +72,8 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * Constructor for Pump.
    * </p>
    *
-   * @param inletStream a
-   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *                    object
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   @Deprecated
   public Pump(StreamInterface inletStream) {
@@ -94,10 +95,9 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * Constructor for Pump.
    * </p>
    *
-   * @param name        name of pump
-   * @param inletStream a
-   *                    {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-   *                    object
+   * @param name name of pump
+   * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+   *        object
    */
   public Pump(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -205,7 +205,8 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         thermoSystem = inStream.getThermoSystem().clone();
         double pumpHead = 0.0;
         pumpHead = getPumpChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
-        isentropicEfficiency = getPumpChart().getEfficiency(thermoSystem.getFlowRate("m3/hr"), getSpeed());
+        isentropicEfficiency =
+            getPumpChart().getEfficiency(thermoSystem.getFlowRate("m3/hr"), getSpeed());
         double deltaP = pumpHead * 1000.0 * ThermodynamicConstantsInterface.gravity / 1.0E5;
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(inStream.getPressure() + deltaP);
@@ -244,84 +245,33 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   /** {@inheritDoc} */
   @Override
   public String[][] createTable(String name) {
+    DecimalFormat nf = new DecimalFormat();
+    nf.setMaximumFractionDigits(5);
+    nf.applyPattern("#.#####E0");
 
-    String[][] table = new String[50][5];
-    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+    String[][] table = new String[4][3];
+    String[] names = {"Property", "Value", "Unit"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";
-    table[0][3] = "";
     StringBuffer buf = new StringBuffer();
     FieldPosition test = new FieldPosition(0);
 
-    for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
-      for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] = thermoSystem.getPhases()[0].getComponents()[j].getName();
-        buf = new StringBuffer();
-        table[j + 1][i + 1] = nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test).toString();
-        table[j + 1][4] = "[-]";
-      }
-      buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf
-          .format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf, test)
-          .toString();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[kg/m^3]";
+    table[1][0] = "Inlet pressure";
+    buf = new StringBuffer();
+    table[1][1] = nf.format(inStream.getPressure("bara"), buf, test).toString();
+    table[1][2] = "bara";
 
-      // Double.longValue(thermoSystem.getPhases()[i].getBeta());
-      buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][0] = "PhaseFraction";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf
-          .format(thermoSystem.getPhases()[i].getBeta(), buf, test).toString();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[-]";
+    table[2][0] = "Outlet pressure";
+    buf = new StringBuffer();
+    table[2][1] = nf.format(outStream.getPressure("bara"), buf, test).toString();
+    table[2][2] = "bara";
 
-      buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][0] = "MolarMass";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][i + 1] = nf
-          .format(thermoSystem.getPhases()[i].getMolarMass() * 1000, buf, test).toString();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][4] = "[kg/kmol]";
-
-      buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][0] = "Cp";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] = nf
-          .format((thermoSystem.getPhases()[i].getCp()
-              / thermoSystem.getPhases()[i].getNumberOfMolesInPhase() * 1.0
-              / thermoSystem.getPhases()[i].getMolarMass() * 1000), buf, test)
-          .toString();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][4] = "[kJ/kg*K]";
-
-      buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][0] = "Viscosity";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] = nf
-          .format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()), buf, test)
-          .toString();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][4] = "[kg/m*sec]";
-
-      buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][0] = "Conductivity";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] = nf
-          .format(thermoSystem.getPhases()[i].getPhysicalProperties().getConductivity(), buf, test)
-          .toString();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][4] = "[W/m*K]";
-
-      buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][0] = "Pressure";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] = Double
-          .toString(thermoSystem.getPhases()[i].getPressure());
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][4] = "[bar]";
-
-      buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Temperature";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] = Double
-          .toString(thermoSystem.getPhases()[i].getTemperature());
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[K]";
-      Double.toString(thermoSystem.getPhases()[i].getTemperature());
-
-      buf = new StringBuffer();
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][0] = "Stream";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][i + 1] = name;
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
-    }
+    table[3][0] = "Head";
+    buf = new StringBuffer();
+    table[3][1] = nf.format(getHead("meter"), buf, test).toString();
+    table[3][2] = "meter";
+    return table;
   }
 
   /** {@inheritDoc} */
@@ -337,7 +287,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
     thermoSystem.initPhysicalProperties();
     String[][] table = new String[50][5];
-    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";
@@ -349,43 +299,43 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
         table[j + 1][0] = thermoSystem.getPhases()[0].getComponents()[j].getName();
         buf = new StringBuffer();
-        table[j + 1][i + 1] = nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test).toString();
+        table[j + 1][i + 1] =
+            nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test).toString();
         table[j + 1][4] = "[-]";
       }
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf
-          .format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf, test)
-          .toString();
+      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] =
+          nf.format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf, test)
+              .toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[kg/m^3]";
 
       // Double.longValue(thermoSystem.getPhases()[i].getBeta());
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][0] = "PhaseFraction";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf
-          .format(thermoSystem.getPhases()[i].getBeta(), buf, test).toString();
+      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] =
+          nf.format(thermoSystem.getPhases()[i].getBeta(), buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[-]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][0] = "MolarMass";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][i + 1] = nf
-          .format(thermoSystem.getPhases()[i].getMolarMass() * 1000, buf, test).toString();
+      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][i + 1] =
+          nf.format(thermoSystem.getPhases()[i].getMolarMass() * 1000, buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][4] = "[kg/kmol]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][0] = "Cp";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] = nf
-          .format((thermoSystem.getPhases()[i].getCp()
+      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] =
+          nf.format((thermoSystem.getPhases()[i].getCp()
               / thermoSystem.getPhases()[i].getNumberOfMolesInPhase() * 1.0
-              / thermoSystem.getPhases()[i].getMolarMass() * 1000), buf, test)
-          .toString();
+              / thermoSystem.getPhases()[i].getMolarMass() * 1000), buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][4] = "[kJ/kg*K]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][0] = "Viscosity";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] = nf
-          .format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()), buf, test)
-          .toString();
+      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] =
+          nf.format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()), buf, test)
+              .toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][4] = "[kg/m*sec]";
 
       buf = new StringBuffer();
@@ -397,14 +347,14 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][0] = "Pressure";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] = Double
-          .toString(thermoSystem.getPhases()[i].getPressure());
+      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] =
+          Double.toString(thermoSystem.getPhases()[i].getPressure());
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][4] = "[bar]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Temperature";
-      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] = Double
-          .toString(thermoSystem.getPhases()[i].getTemperature());
+      table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] =
+          Double.toString(thermoSystem.getPhases()[i].getTemperature());
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[K]";
       Double.toString(thermoSystem.getPhases()[i].getTemperature());
 
@@ -517,7 +467,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure);
@@ -551,8 +501,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * Getter for the field <code>pumpChart</code>.
    * </p>
    *
-   * @return a {@link neqsim.processSimulation.processEquipment.pump.PumpChart}
-   *         object
+   * @return a {@link neqsim.processSimulation.processEquipment.pump.PumpChart} object
    */
   public PumpChart getPumpChart() {
     return pumpChart;
