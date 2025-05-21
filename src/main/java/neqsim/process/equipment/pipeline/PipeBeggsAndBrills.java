@@ -7,7 +7,6 @@ import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.PipeBeggsBrillsResponse;
-import neqsim.process.util.monitor.PumpResponse;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -726,7 +725,7 @@ public class PipeBeggsAndBrills extends Pipeline {
     double E = pipeWallRoughness / insideDiameter;
 
     // Haaland equation
-    frictionFactor = Math.pow(1 / (-1.8 * Math.log10((E / 3.7) + (6.9 / ReNoSlip))), 2);
+    frictionFactor = Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / ReNoSlip))), 2);
     frictionTwoPhase = frictionFactor * Math.exp(S);
 
     frictionPressureLoss =
